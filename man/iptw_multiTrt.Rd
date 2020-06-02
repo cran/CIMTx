@@ -4,8 +4,10 @@
 \alias{iptw_multiTrt}
 \title{Inverse probability of treatment weighting (IPTW)}
 \usage{
-iptw_multiTrt(y, trt, psdat, estimand = "ATE", method, wt1, wt2, wt3,
-  wt12, wt13, trim_alpha, SL.library)
+iptw_multiTrt(y, trt, psdat, estimand = "ATE", method,
+  trim_alpha = parent.frame()$trim_alpha,
+  SL.library = parent.frame()$SL.library,
+  reference = parent.frame()$reference_trt)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -18,19 +20,11 @@ iptw_multiTrt(y, trt, psdat, estimand = "ATE", method, wt1, wt2, wt3,
 
 \item{method}{methods for causal inference with multiple treatments, inherited from causal_multi_treat.R}
 
-\item{wt1}{weight for treatment group 1 in ATE}
-
-\item{wt2}{weight for treatment group 2 in ATE}
-
-\item{wt3}{weight for treatment group 3 in ATE}
-
-\item{wt12}{weight for treatment group 2 in ATT}
-
-\item{wt13}{weight for treatment group 3 in ATT}
-
 \item{trim_alpha}{alpha values for IPTW weight trimming, inherited from causal_multi_treat.R}
 
 \item{SL.library}{methods specified with SL.library in Superlearner package, inherited from causal_multi_treat.R}
+
+\item{reference}{Reference group for ATT}
 }
 \value{
 list with 2 elements for ATT effect. It contains
@@ -52,10 +46,10 @@ This function implements the IPTW method. Please use our main function causal_mu
 \examples{
 library(CIMTx)
 set.seed(1)
-idata = data_gen(n = 50, ratio =1,scenario = 1)
+idata = data_gen(n = 500, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
-iptw_multiTrt(y=y, trt = trt_ind,SL.library = c("SL.glm"),
-trim_alpha = 0.05, method = "IPTW-GBM", estimand = "ATT")
+causal_multi_treat(y = y,trt = trt_ind,
+method = "IPTW-Logistics", estimand = "ATT", reference_trt = 2)
 }

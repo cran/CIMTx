@@ -5,7 +5,8 @@
 \title{Estimation of causal effects of multiple treatments}
 \usage{
 causal_multi_treat(y, x, trt, method, discard = "No", estimand,
-  trim_alpha = 0.05, SL.library = c("SL.glm", "SL.gam", "SL.knn"))
+  trim_alpha = 0.05, SL.library = c("SL.glm", "SL.gam", "SL.knn"),
+  reference_trt = 1, ndpost = 1000)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -35,6 +36,10 @@ causal_multi_treat(y, x, trt, method, discard = "No", estimand,
 \item{trim_alpha}{alpha values for IPTW weight trimming. The default is 0.05, which means we truncate upper 95\% and lower 5\% of the weights for further IPTW estimation. The default is a combination of SL.glm, SL.gam and SL.knn.}
 
 \item{SL.library}{methods specified with SL.library in Superlearner package}
+
+\item{reference_trt}{Reference group for ATT}
+
+\item{ndpost}{number of independent simulation draws to create}
 }
 \value{
 list with 2 elements for ATT effect. It contains
@@ -62,11 +67,11 @@ all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
 
 # Regression Adjustment
-causal_multi_treat(y = y, x = idata$trtdat,
+causal_multi_treat(y = y, x = idata$trtdat,ndpost = 10,
+trt = trt_ind, method ="Regression Adjustment", estimand = "ATT", reference_trt = 3)
+causal_multi_treat(y = y, x = idata$trtdat,ndpost = 10,
 trt = trt_ind, method ="Regression Adjustment",
 estimand = "ATE")
-causal_multi_treat(y = y, x = idata$trtdat,
-trt = trt_ind, method ="Regression Adjustment", estimand = "ATT")
 
 
 
@@ -107,8 +112,5 @@ trt = trt_ind,method = "IPTW-Superlearner", estimand = "ATT")
 causal_multiple_treatment(y = y, x = idata$trtdat,
 trt = trt_ind, method = "IPTW-Superlearner-Trim", estimand = "ATT")
 
-# TMLE
-causal_multiple_treatment(y = y, x = idata$trtdat, trt = trt_ind,
-method = "TMLE", estimand = "ATE")
 }
 }

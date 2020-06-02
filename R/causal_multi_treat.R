@@ -21,6 +21,8 @@
 #' @param SL.library methods specified with SL.library in Superlearner package
 #' @param discard discarding rules for BART method. Please select "No", "Lenient" or "Stringent". The default is "No".
 #' @param estimand causal estimands. Please select "ATT" or "ATE"
+#' @param reference_trt Reference group for ATT
+#' @param ndpost number of independent simulation draws to create
 #'
 #' @return list with 2 elements for ATT effect. It contains
 #' \item{ATT12:}{A dataframe containing the estimation,
@@ -46,11 +48,11 @@
 #'y <- idata$Yobs
 #'
 #'# Regression Adjustment
-#'causal_multi_treat(y = y, x = idata$trtdat,
+#'causal_multi_treat(y = y, x = idata$trtdat,ndpost = 10,
+#'trt = trt_ind, method ="Regression Adjustment", estimand = "ATT", reference_trt = 3)
+#'causal_multi_treat(y = y, x = idata$trtdat,ndpost = 10,
 #'trt = trt_ind, method ="Regression Adjustment",
 #'estimand = "ATE")
-#'causal_multi_treat(y = y, x = idata$trtdat,
-#'trt = trt_ind, method ="Regression Adjustment", estimand = "ATT")
 #'
 #'
 #'
@@ -91,20 +93,16 @@
 #' causal_multiple_treatment(y = y, x = idata$trtdat,
 #' trt = trt_ind, method = "IPTW-Superlearner-Trim", estimand = "ATT")
 #'
-#'# TMLE
-#'causal_multiple_treatment(y = y, x = idata$trtdat, trt = trt_ind,
-#'method = "TMLE", estimand = "ATE")
 #'}
 
 
-
-
-causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim_alpha = 0.05, SL.library = c("SL.glm", "SL.gam", "SL.knn")){
+causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim_alpha = 0.05, SL.library = c("SL.glm", "SL.gam", "SL.knn"), reference_trt = 1, ndpost = 1000){
   if (method == "Regression Adjustment" && estimand == "ATE") {
     result <- regadj_multiTrt(
       y,
       x,
       trt,
+      ndpost = parent.frame()$ndpost,
       estimand = "ATE"
     )
   } else if (method == "Regression Adjustment" && estimand == "ATT"){
@@ -112,6 +110,8 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       y,
       x,
       trt,
+      ndpost = parent.frame()$ndpost,
+      reference = parent.frame()$reference_trt,
       estimand = "ATT"
     )
   } else if (method == "VM Matching" && estimand == "ATT") {
@@ -122,7 +122,8 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       x,
       trt,
       estimand = "ATE",
-      discard = "No"
+      discard = "No",
+      ndpost = parent.frame()$ndpost
     )
   } else if (method == "BART" && estimand == "ATE" && discard == "Stringent"){
     result <- bart_multiTrt(
@@ -130,6 +131,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       x,
       trt,
       estimand = "ATE",
+      ndpost = parent.frame()$ndpost,
       discard = "Stringent"
     )
   } else if (method == "BART" && estimand == "ATE" && discard == "Lenient"){
@@ -138,6 +140,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       x,
       trt,
       estimand = "ATE",
+      ndpost = parent.frame()$ndpost,
       discard = "Lenient"
     )
   } else if (method == "BART" && estimand == "ATT" && discard == "No"){
@@ -146,6 +149,8 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       x,
       trt,
       estimand = "ATT",
+      ndpost = parent.frame()$ndpost,
+      reference = parent.frame()$reference_trt,
       discard = "No"
     )
   } else if (method == "BART" && estimand == "ATT" && discard == "Stringent"){
@@ -154,6 +159,8 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       x,
       trt,
       estimand = "ATT",
+      ndpost = parent.frame()$ndpost,
+      reference = parent.frame()$reference_trt,
       discard = "Stringent"
     )
   } else if (method == "BART" && estimand == "ATT" && discard == "Lenient"){
@@ -162,6 +169,8 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       x,
       trt,
       estimand = "ATT",
+      ndpost = parent.frame()$ndpost,
+      reference = parent.frame()$reference_trt,
       discard = "Lenient"
     )
   } else if (method == "IPTW-Logistics" && estimand == "ATT" ){
@@ -170,6 +179,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       trt,
       trim_alpha =trim_alpha,
       estimand = "ATT",
+      reference = parent.frame()$reference_trt,
       method = method,
       SL.library = SL.library
     )
@@ -179,6 +189,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       trt,
       trim_alpha =trim_alpha,
       estimand = "ATT",
+      reference = parent.frame()$reference_trt,
       method= method,
       SL.library = SL.library
     )
@@ -188,6 +199,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       trt,
       trim_alpha =trim_alpha,
       estimand = "ATT",
+      reference = parent.frame()$reference_trt,
       method= method,
       SL.library = SL.library
     )
@@ -197,6 +209,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       trt,
       trim_alpha =trim_alpha,
       estimand = "ATT",
+      reference = parent.frame()$reference_trt,
       method= method,
       SL.library = SL.library
     )
@@ -242,6 +255,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
       trt,
       trim_alpha =trim_alpha,
       estimand = "ATT",
+      reference = parent.frame()$reference_trt,
       method= method,
       SL.library = SL.library
     )
@@ -276,7 +290,7 @@ causal_multi_treat <- function(y, x, trt, method, discard = "No", estimand, trim
     result <- tmle(
       y,
       trt,
-
+      x
       # estimand = "ATE",
       # method
     )

@@ -4,7 +4,9 @@
 \alias{regadj_multiTrt}
 \title{Regression Adjustment}
 \usage{
-regadj_multiTrt(y, x, trt, estimand = "ATE", ndpost = 1000)
+regadj_multiTrt(y, x, trt, estimand = "ATE",
+  ndpost = parent.frame()$ndpost,
+  reference = parent.frame()$reference_trt)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -16,6 +18,8 @@ regadj_multiTrt(y, x, trt, estimand = "ATE", ndpost = 1000)
 \item{estimand}{causal estimands. Please select "ATT" or "ATE"}
 
 \item{ndpost}{number of independent simulation draws to create}
+
+\item{reference}{Reference group for ATT}
 }
 \value{
 list with 2 elements for ATT effect. It contains
@@ -41,5 +45,6 @@ idata = data_gen(n = 12, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1]
 y <- idata$Yobs
-regadj_multiTrt(y = y, x = idata$trtdat,trt = trt_ind, estimand="ATE")
+causal_multi_treat(y = y, x = idata$trtdat,ndpost = 10,
+trt = trt_ind, method ="Regression Adjustment", estimand = "ATT", reference_trt = 3)
 }

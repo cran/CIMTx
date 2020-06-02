@@ -5,7 +5,7 @@
 \title{Bayesian Additive Regression Trees (BART) for ATE estimation}
 \usage{
 bart_multiTrt_ate(y, x, trt, k = 2, discard = "No", ntree = 100,
-  ndpost = 1000, nskip = 1000)
+  ndpost = parent.frame()$ndpost, nskip = 1000)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -48,4 +48,6 @@ idata = data_gen(n = 3, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
+causal_multi_treat(y = y, x = idata$trtdat,
+trt = trt_ind, method = "BART", estimand = "ATE", discard = "No", ndpost = 10)
 }

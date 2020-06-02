@@ -4,8 +4,7 @@
 \alias{iptw_multiTrt_ate}
 \title{Inverse probability of treatment weighting for ATE estimation (IPTW)}
 \usage{
-iptw_multiTrt_ate(y, trt_ind, psdat, wt1, wt2, wt3, method, trim_alpha,
-  SL.library)
+iptw_multiTrt_ate(y, trt_ind, psdat, method, trim_alpha, SL.library)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -13,12 +12,6 @@ iptw_multiTrt_ate(y, trt_ind, psdat, wt1, wt2, wt3, method, trim_alpha,
 \item{trt_ind}{numeric vector for the treatment indicator}
 
 \item{psdat}{data frame containing the treatment indicator and covariates}
-
-\item{wt1}{weight for treatment group 1 in ATE}
-
-\item{wt2}{weight for treatment group 2 in ATE}
-
-\item{wt3}{weight for treatment group 3 in ATE}
 
 \item{method}{methods for causal inference with multiple treatments, inherited from causal_multi_treat.R}
 
@@ -51,6 +44,8 @@ trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
 iptw_multiTrt_ate(y=y, trt = trt_ind,SL.library = c("SL.glm"),
-trim_alpha = 0.05, method = "IPTW-GBM")
+trim_alpha = 0.05, method = "IPTW-Logistics-Trim")
+causal_multi_treat(y = y,trt = trt_ind,
+method = "IPTW-Logistics", estimand = "ATE")
 
 }

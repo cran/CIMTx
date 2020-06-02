@@ -4,7 +4,8 @@
 \alias{regadj_multiTrt_att}
 \title{Regression Adjustment when estimand is ATT}
 \usage{
-regadj_multiTrt_att(y, x, trt, ndpost = 1000)
+regadj_multiTrt_att(y, x, trt, ndpost = parent.frame()$ndpost,
+  reference = parent.frame()$reference_trt)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -14,6 +15,8 @@ regadj_multiTrt_att(y, x, trt, ndpost = 1000)
 \item{trt}{numeric vector for the treatment indicator}
 
 \item{ndpost}{number of independent simulation draws to create}
+
+\item{reference}{Reference group for ATT}
 }
 \value{
 list with 2 elements for ATT effect. It contains
@@ -39,5 +42,6 @@ idata = data_gen(n = 12, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1]
 y <- idata$Yobs
-regadj_multiTrt_att(y = y, x = idata$trtdat,trt = trt_ind)
+reference_trt <- 2
+regadj_multiTrt_att(y = y, x = idata$trtdat,trt = trt_ind, reference = 2, ndpost = 100)
 }

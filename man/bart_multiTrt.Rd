@@ -5,7 +5,8 @@
 \title{Bayesian Additive Regression Trees (BART)}
 \usage{
 bart_multiTrt(y, x, trt, discard = FALSE, estimand = "ATE", k = 2,
-  ntree = 100, ndpost = 1000, nskip = 1000)
+  ntree = 100, ndpost = parent.frame()$ndpost, nskip = 1000,
+  reference = parent.frame()$reference_trt)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -25,6 +26,8 @@ bart_multiTrt(y, x, trt, discard = FALSE, estimand = "ATE", k = 2,
 \item{ndpost}{The number of posterior draws returned}
 
 \item{nskip}{Number of MCMC iterations to be treated as burn in}
+
+\item{reference}{Reference group for ATT}
 }
 \value{
 list with 2 elements for ATT effect. It contains
@@ -50,5 +53,7 @@ idata = data_gen(n = 3, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
-bart_multiTrt(y=y,x = idata$trtdat, trt = trt_ind, estimand="ATT")
+reference_trt <- 2
+causal_multi_treat(y = y, x = idata$trtdat,
+trt = trt_ind, method = "BART", estimand = "ATT", discard = "No", ndpost = 10, reference_trt = 2)
 }

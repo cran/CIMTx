@@ -4,7 +4,7 @@
 \alias{regadj_multiTrt_ate}
 \title{Regression Adjustment when estimand is ATE}
 \usage{
-regadj_multiTrt_ate(y, x, trt, ndpost = 1000)
+regadj_multiTrt_ate(y, x, trt, ndpost = parent.frame()$ndpost)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -39,5 +39,6 @@ idata = data_gen(n = 12, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1]
 y <- idata$Yobs
-regadj_multiTrt_ate(y = y, x = idata$trtdat,trt = trt_ind)
+causal_multi_treat(y = y, x = idata$trtdat,ndpost = 10,
+trt = trt_ind, method ="Regression Adjustment", estimand = "ATE")
 }

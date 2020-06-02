@@ -4,8 +4,9 @@
 \alias{iptw_multiTrt_att}
 \title{Inverse probability of treatment weighting for ATT estimation (IPTW)}
 \usage{
-iptw_multiTrt_att(y, trt, psdat, wt12, wt13, method, trim_alpha,
-  SL.library)
+iptw_multiTrt_att(y, trt, psdat, method, trim_alpha,
+  reference = parent.frame()$reference_trt,
+  SL.library = parent.frame()$SL.library)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -14,13 +15,11 @@ iptw_multiTrt_att(y, trt, psdat, wt12, wt13, method, trim_alpha,
 
 \item{psdat}{data frame containing the treatment indicator and covariates}
 
-\item{wt12}{weight for treatment group 2 in ATT}
-
-\item{wt13}{weight for treatment group 3 in ATT}
-
 \item{method}{methods for causal inference with multiple treatments, inherited from causal_multi_treat.R}
 
 \item{trim_alpha}{alpha values for IPTW weight trimming, inherited from causal_multi_treat.R}
+
+\item{reference}{Reference group for ATT}
 
 \item{SL.library}{methods specified with SL.library in Superlearner package, inherited from causal_multi_treat.R}
 }
@@ -48,6 +47,7 @@ idata = data_gen(n = 50, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
-iptw_multiTrt_att(y=y, trt = trt_ind,SL.library = c("SL.glm"),
-trim_alpha = 0.05, method = "IPTW-GBM")
+reference_trt <- 2
+causal_multi_treat(y = y,trt = trt_ind,
+method = "IPTW-Logistics", estimand = "ATT", reference_trt = 2)
 }

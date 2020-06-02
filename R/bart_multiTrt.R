@@ -11,6 +11,7 @@
 #' @param ntree The number of trees in the sum
 #' @param ndpost The number of posterior draws returned
 #' @param nskip Number of MCMC iterations to be treated as burn in
+#' @param reference Reference group for ATT
 #'
 #' @return list with 2 elements for ATT effect. It contains
 #' \item{ATT12:}{A dataframe containing the estimation,
@@ -32,8 +33,10 @@
 #'trt_ind <- as.numeric(idata$trtdat$trt_ind)
 #'all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 #'y <- idata$Yobs
-#'bart_multiTrt(y=y,x = idata$trtdat, trt = trt_ind, estimand="ATT")
-bart_multiTrt = function(y, x, trt, discard = FALSE, estimand="ATE", k=2, ntree=100, ndpost=1000, nskip=1000) {
+#'reference_trt <- 2
+#'causal_multi_treat(y = y, x = idata$trtdat,
+#'trt = trt_ind, method = "BART", estimand = "ATT", discard = "No", ndpost = 10, reference_trt = 2)
+bart_multiTrt = function(y, x, trt, discard = FALSE, estimand="ATE", k=2, ntree=100, ndpost=parent.frame()$ndpost, nskip=1000, reference = parent.frame()$reference_trt) {
   x <- x[, -1]
   # Data structure
   #        Y(1) Y(2) Y(3)
@@ -47,11 +50,11 @@ bart_multiTrt = function(y, x, trt, discard = FALSE, estimand="ATE", k=2, ntree=
   # trt=3  y31  y32  y33
 
   if (estimand=="ATE") {
-    bart_est = bart_multiTrt_ate(y, x, trt, discard = FALSE, k=2, ntree=100, ndpost=1000, nskip=1000)
+    bart_est = bart_multiTrt_ate(y, x, trt, discard = FALSE, k=2, ntree=100, ndpost=parent.frame()$ndpost, nskip=1000)
   }
 
   if (estimand=="ATT") {
-    bart_est = bart_multiTrt_att(y, x, trt, discard = FALSE, k=2, ntree=100, ndpost=1000, nskip=1000)
+    bart_est = bart_multiTrt_att(y, x, trt, discard = FALSE, k=2, ntree=100, ndpost=parent.frame()$ndpost, nskip=1000, reference = parent.frame()$reference_trt)
   }
 
   return(bart_est)

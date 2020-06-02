@@ -4,7 +4,7 @@
 \alias{vm_multiTrt_att}
 \title{Vector matching Matching (VM matching)}
 \usage{
-vm_multiTrt_att(y, x, trt)
+vm_multiTrt_att(y, x, trt, reference = parent.frame()$reference_trt)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
@@ -12,6 +12,8 @@ vm_multiTrt_att(y, x, trt)
 \item{x}{dataframe including the treatment indicator and the covariates}
 
 \item{trt}{numeric vector for the treatment indicator}
+
+\item{reference}{Reference group for ATT}
 }
 \value{
 list with 2 elements for ATT effect. It contains
@@ -33,9 +35,10 @@ This function implements the VM matching method. Please use our main function ca
 \examples{
 library(CIMTx)
 set.seed(1)
-idata = data_gen(n = 1200, ratio =1,scenario = 1)
+idata = data_gen(n = 120, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
-vm_multiTrt_att(y=y,x = idata$trtdat, trt = trt_ind)
+causal_multi_treat(y = y, x = idata$trtdat,
+trt = trt_ind,method = "VM Matching", estimand = "ATT", reference = 1)
 }

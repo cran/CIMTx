@@ -4,14 +4,14 @@
 \alias{tmle}
 \title{Targeted maximum likelihood (TMLE)}
 \usage{
-tmle(y, trt, psdat, ...)
+tmle(y, trt, x, ...)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}
 
 \item{trt}{numeric vector for the treatment indicator}
 
-\item{psdat}{data frame containing the treatment indicator and covariates}
+\item{x}{data frame containing the treatment indicator and covariates}
 
 \item{...}{Other arguments}
 }
@@ -25,6 +25,7 @@ idata = data_gen(n = 120, ratio =1,scenario = 1)
 trt_ind <- as.numeric(idata$trtdat$trt_ind)
 all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 y <- idata$Yobs
-psdat = idata$trtdat
-tmle(y = y, x = idata$trtdat, trt = trt_ind, psdat = idata$trtdat, SL.library = c("SL.glm"))
+x = idata$trtdat
+causal_multi_treat(y = y, x = idata$trtdat, trt = trt_ind,SL.library = c("SL.glm"),
+method = "IPTW-Logistics", estimand = "ATE")
 }
