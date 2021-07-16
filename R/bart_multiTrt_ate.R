@@ -56,11 +56,11 @@ bart_multiTrt_ate = function(y, x, trt, k=2, discard = "No", ntree=100, ndpost=p
 
     # Predict potential outcomes for trt=1
     for (i in 1:n_trt){
-      assign(paste0("xp",i), xt[trt==i,])
+      assign(paste0("xp",i), xt[trt==i,] %>% dplyr::select(-trt))
       for (j in 1:(n_trt)){
 
-        assign(paste0("xp",j), eval(parse(text = paste0("xp",i))) %>%
-                 dplyr::mutate(trt = j))
+        assign(paste0("xp",j), eval(parse(text = paste0("xp",i))))
+                 # dplyr::mutate(trt = j))
         assign(paste0("bart_pred",i,j), BART::pwbart(eval(parse(text = paste0("xp",j))), bart_mod$treedraws,mu=mean(y)))
         assign(paste0("pred_prop",i,j), stats::pnorm(eval(parse(text = paste0("bart_pred",i,j)))))
       }

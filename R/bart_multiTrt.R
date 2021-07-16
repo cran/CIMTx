@@ -29,12 +29,12 @@
 #' @examples
 #'library(CIMTx)
 #'set.seed(3242019)
-#'idata = data_gen(n = 3, ratio =1,scenario = 1)
+#'idata = data_gen(n = 5, ratio =1,scenario = 1)
 #'trt_ind <- as.numeric(idata$trtdat$trt_ind)
 #'all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 #'y <- idata$Yobs
 #'reference_trt <- 2
-#'causal_multi_treat(y = y, x = idata$trtdat,
+#'causal_multi_treat(y = y, x = all_vars,
 #'trt = trt_ind, method = "BART", estimand = "ATT", discard = "No", ndpost = 10, reference_trt = 2)
 bart_multiTrt = function(y, x, trt, discard = FALSE, estimand="ATE", k=2, ntree=100, ndpost=parent.frame()$ndpost, nskip=1000, reference = parent.frame()$reference_trt) {
   x <- x[, -1]

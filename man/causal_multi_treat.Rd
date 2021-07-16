@@ -4,9 +4,18 @@
 \alias{causal_multi_treat}
 \title{Estimation of causal effects of multiple treatments}
 \usage{
-causal_multi_treat(y, x, trt, method, discard = "No", estimand,
-  trim_alpha = 0.05, SL.library = c("SL.glm", "SL.gam", "SL.knn"),
-  reference_trt = 1, ndpost = 1000)
+causal_multi_treat(
+  y,
+  x,
+  trt,
+  method,
+  discard = "No",
+  estimand,
+  trim_alpha = 0.05,
+  SL.library = c("SL.glm", "SL.gam", "SL.knn"),
+  reference_trt = 1,
+  ndpost = 1000
+)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}

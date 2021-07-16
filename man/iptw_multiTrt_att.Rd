@@ -4,9 +4,15 @@
 \alias{iptw_multiTrt_att}
 \title{Inverse probability of treatment weighting for ATT estimation (IPTW)}
 \usage{
-iptw_multiTrt_att(y, trt, psdat, method, trim_alpha,
+iptw_multiTrt_att(
+  y,
+  trt,
+  psdat,
+  method,
+  trim_alpha,
   reference = parent.frame()$reference_trt,
-  SL.library = parent.frame()$SL.library)
+  SL.library = parent.frame()$SL.library
+)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}

@@ -4,8 +4,13 @@
 \alias{regadj_multiTrt_att}
 \title{Regression Adjustment when estimand is ATT}
 \usage{
-regadj_multiTrt_att(y, x, trt, ndpost = parent.frame()$ndpost,
-  reference = parent.frame()$reference_trt)
+regadj_multiTrt_att(
+  y,
+  x,
+  trt,
+  ndpost = parent.frame()$ndpost,
+  reference = parent.frame()$reference_trt
+)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}

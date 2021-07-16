@@ -32,9 +32,9 @@ data_gen_p1 = function(n = 11600, ratio = 3,all_confounder=FALSE ) {
   if (ratio ==3) {alpha1 = -2.57; alpha2 = 0.52}
 
   #set.seed(3242019)
-  X = matrix(stats::rnorm(p*n), nrow=n, ncol=p/2)
+  X = matrix(stats::rnorm(p/2*n), nrow=n, ncol=p/2)
   x1 = X[,1]; x2 = X[,2]; x3 = X[,3]; x4 = X[,4]; x5= X[,5]
-  C = matrix(sample(0:2, n*p,replace = T, prob = c(.3,.3,.4)), nrow=n,ncol=p/2)
+  C = matrix(sample(0:2, n*p/2,replace = T, prob = c(.3,.3,.4)), nrow=n,ncol=p/2)
   x6 = C[,1]; x7 = C[,2]; x8 = C[,3]; x9 = C[,4]; x10 = C[,5];
 
   ex1 = exp(alpha1+.2*x1+.4*x2+.3*x3+.4*x4+.1*x5+.2*x6 -.8*x7 - 1.1*x8+.5*x9+0.5*x10

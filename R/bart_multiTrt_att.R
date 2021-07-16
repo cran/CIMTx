@@ -35,7 +35,7 @@
 #'trt_ind <- as.numeric(idata$trtdat$trt_ind)
 #'all_vars <- idata$trtdat[, -1] #exclude treatment indicator
 #'y <- idata$Yobs
-#'causal_multi_treat(y = y, x = idata$trtdat,
+#'causal_multi_treat(y = y, x = all_vars,
 #'trt = trt_ind, method = "BART", estimand = "ATT", discard = "No", ndpost = 10, reference_trt = 2)
 bart_multiTrt_att = function(y, x, trt, k=2, discard = "No", ntree=100, ndpost=1000, nskip=1000, reference = parent.frame()$reference_trt) {
   n_trt <- length(unique(trt))
@@ -59,14 +59,15 @@ bart_multiTrt_att = function(y, x, trt, k=2, discard = "No", ntree=100, ndpost=1
   # Predict potential outcomes for trt=1
   # xp1 = xt[trt==1,]
   assign(paste0("xp",reference), xt[trt==reference,])
-  for (i in trt_indicator[trt_indicator!=reference]){
+  for (i in trt_indicator){
     assign(paste0("xp",i), xt[trt==i,])
     assign(paste0("xp",i), eval(parse(text = paste0("xp",i))) %>%
              dplyr::mutate(trt = i))
+             # dplyr::select(-trt))
   }
 
   for (j in 1:(n_trt)){
-      assign(paste0("bart_pred",reference,j), BART::pwbart(eval(parse(text = paste0("xp",j))), bart_mod$treedraws, mu=mean(y)))
+      assign(paste0("bart_pred",reference,j), BART::pwbart(as.matrix(eval(parse(text = paste0("xp",j)))), bart_mod$treedraws, mu=mean(y)))
       assign(paste0("pred_prop",reference,j), stats::pnorm(eval(parse(text = paste0("bart_pred",reference,j)))))
     }
 

@@ -4,8 +4,16 @@
 \alias{bart_multiTrt_ate}
 \title{Bayesian Additive Regression Trees (BART) for ATE estimation}
 \usage{
-bart_multiTrt_ate(y, x, trt, k = 2, discard = "No", ntree = 100,
-  ndpost = parent.frame()$ndpost, nskip = 1000)
+bart_multiTrt_ate(
+  y,
+  x,
+  trt,
+  k = 2,
+  discard = "No",
+  ntree = 100,
+  ndpost = parent.frame()$ndpost,
+  nskip = 1000
+)
 }
 \arguments{
 \item{y}{numeric vector for the binary outcome}

@@ -5,8 +5,7 @@
 \title{Data generation function for scenario 2
 This function generates data to test different causal inference methods for scenario 2.  Please use our main function data_gen.R}
 \usage{
-data_gen_p2(n = 11600, p = 10, overlap = "weak",
-  all_confounder = TRUE)
+data_gen_p2(n = 11600, p = 10, overlap = "weak", all_confounder = TRUE)
 }
 \arguments{
 \item{n}{total number of units for simulation}
