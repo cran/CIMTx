@@ -2,22 +2,21 @@
 % Please edit documentation in R/trunc_fun.R
 \name{trunc_fun}
 \alias{trunc_fun}
-\title{Truncation}
+\title{Function to truncate weight}
 \usage{
-trunc_fun(x, trim_alpha = 0.05)
+trunc_fun(x, trim_perc = 0.05)
 }
 \arguments{
-\item{x}{vector to be trimmed}
+\item{x}{weight}
 
-\item{trim_alpha}{alpha values for IPTW weight trimming, inherited from causal_multi_treat.R}
+\item{trim_perc}{the percentile at which the inverse probability of treatment weights should be trimmed.}
 }
 \value{
-vector trimmed
+Truncated weights
 }
 \description{
-This function implements the truncation feature when estimand is ATT. Please use our main function causal_multi_treat.R.
+Function to truncate weight
 }
 \examples{
-library(CIMTx)
-trunc_fun(1:10)
+trunc_fun(rnorm(1000,0,1),0.05)
 }

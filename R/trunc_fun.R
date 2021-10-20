@@ -1,16 +1,19 @@
-
-#' Truncation
+#' Function to truncate weight
 #'
-#' This function implements the truncation feature when estimand is ATT. Please use our main function causal_multi_treat.R.
+#' @param x weight
+#' @param trim_perc the percentile at which the inverse probability of treatment weights should be trimmed.
 #'
-#' @param x vector to be trimmed
-#' @param trim_alpha alpha values for IPTW weight trimming, inherited from causal_multi_treat.R
-#'
-#' @return vector trimmed
+#' @return Truncated weights
 #' @export
+#'
 #' @examples
-#' library(CIMTx)
-#' trunc_fun(1:10)
-trunc_fun <- function(x, trim_alpha = 0.05) {
-  pmin(stats::quantile(x, (1-trim_alpha)), pmax(stats::quantile(x, trim_alpha), x))
+#' trunc_fun(rnorm(1000,0,1),0.05)
+trunc_fun <- function(x, trim_perc = 0.05) {
+  if (length(trim_perc) == 1 && trim_perc < 0.5) {
+    pmax(stats::quantile(x, trim_perc),x)
+  } else if (length(trim_perc) == 1 && trim_perc >= 0.5) {
+    pmin(stats::quantile(x, trim_perc), x)
+  } else if (length(trim_perc) == 2) {
+    pmin(stats::quantile(x, trim_perc[2]), pmax(stats::quantile(x, trim_perc[1]), x))
+  }
 }
