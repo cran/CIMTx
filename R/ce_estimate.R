@@ -1,24 +1,33 @@
 #' Causal inference with multiple treatments using observational data
 #'
-#' This function implements the 6 different methods for causal inference with multiple treatments using observational data.
+#' The function \code{ce_estimate} implements the 6 different methods for causal inference with multiple treatments using observational data.
 #'
-#' @param y a numeric vector (0, 1) representing a binary outcome
-#' @param x a dataframe, including all the covariates but not treatments.
-#' @param w a numeric vector representing the treatment groups
-#' @param method a character string. Users can selected from the following methods including "RA", "VM", "BART", "TMLE", "IPTW-Multinomial", "IPTW-GBM", "IPTW-SL", "RAMS-Multinomial", "RAMS-GBM", "RAMS-SL"
-#' @param discard "No" or "Yes" indicating whether to use the discarding rules for the BART based method. The default is "No"
-#' @param estimand "ATT" or "ATE" representing the type of causal estimand. When the estimand = "ATT", users also need to specify the reference treatment group by setting the reference_trt argument.
-#' @param trim_perc the percentile at which the inverse probability of treatment weights shouldbe trimmed
-#' @param SL.library a character vector of prediction algorithms. A list of functions included in the SuperLearner package can be found with listWrappers().
-#' @param reference_trt reference treatment group for ATT effect
-#' @param boot is logical, indicating whether or not to use nonparametric bootstrap to calculate the 95\% confidence intervals of the causal effect estimates.
-#' @param nboots only need to set up when the boot = TRUE; is a numeric value representing the number of bootstrap samples
-#' @param ndpost is the number of posterior draws for the Bayesian methods
-#' @param caliper only need to set up when the method is set to VM; is a numeric value denoting the caliper which should be used when matching on the logit of GPS within each cluster formed by K-means clustering. The caliper is in standardized units. For example, caliper = 0.25 means that all matches greater than 0.25 standard deviations of the logit of GPS are dropped. The default value is 0.25
-#' @param n_cluster only need to set up when the method is set to VM; a numeric value denoting the number of clusters to form using K means clustering on the logit of GPS. The default value is 5.
-#' @param ... Other parameters that can be passed through the functions
+#' @param y A numeric vector (0, 1) representing a binary outcome.
+#' @param x A dataframe, including all the covariates but not treatments.
+#' @param w A numeric vector representing the treatment groups.
+#' @param method A character string. Users can selected from the following methods including \code{"RA"}, \code{"VM"}, \code{"BART"}, \code{"TMLE"}, \code{"IPTW-Multinomial"}, \code{"IPTW-GBM"}, \code{"IPTW-SL"}, \code{"RAMS-Multinomial"}, \code{"RAMS-GBM"}, \code{"RAMS-SL"}.
+#' @param formula A \code{\link[stats]{formula}} object representing the variables used for the analysis. The default is to use all terms specified in \code{x}.
+#' @param discard A logical indicating whether to use the discarding rules for the BART based methods. The default is \code{FALSE}.
+#' @param estimand A character string representing the type of causal estimand. Only \code{"ATT"} or \code{"ATE"} is allowed. When the \code{estimand = "ATT"}, users also need to specify the reference treatment group by setting the \code{reference_trt} argument.
+#' @param trim_perc A numeric value indicating the percentile at which the inverse probability of treatment weights should be trimmed. The default is \code{NULL}.
+#' @param SL.library A character vector of prediction algorithms. A list of functions included in the SuperLearner package can be found with \code{\link[SuperLearner:listWrappers]{listWrappers}}.
+#' @param reference_trt A numeric value indicating reference treatment group for ATT effect.
+#' @param boot A logical indicating whether or not to use nonparametric bootstrap to calculate the 95\% confidence intervals of the causal effect estimates. The default is \code{FALSE}.
+#' @param verbose_boot A logical value indicating whether to print the progress of nonparametric bootstrap. The default is \code{TRUE}.
+#' @param nboots A numeric value representing the number of bootstrap samples.
+#' @param ndpost A numeric value indicating the number of posterior draws for the Bayesian methods (\code{"BART"} and \code{"RA"}).
+#' @param caliper A numeric value denoting the caliper which should be used when matching (\code{method = "VM"}) on the logit of GPS within each cluster formed by K-means clustering. The caliper is in standardized units. For example, \code{caliper = 0.25} means that all matches greater than 0.25 standard deviations of the logit of GPS are dropped. The default value is 0.25.
+#' @param n_cluster A numeric value denoting the number of clusters to form using K means clustering on the logit of GPS when \code{method = "VM"}. The default value is 5.
+#' @param ... Other parameters that can be passed through to functions.
 #'
-#' @return a list with w-1 elements for ATT effect; a list with w*(w-1)/2 elements for ATE effect. Each element of the list contains the estimation, standard error, lower and upper 95\% CI for RD/RR/OR
+#' @return A list of causal estimands including risk difference (RD), odds ratios (OR) and relative risk (RR) between different treatment groups.
+#' @references
+#'
+#' Hu, L., Gu, C., Lopez, M., Ji, J., & Wisnivesky, J. (2020). Estimation of causal effects of multiple treatments in observational studies with a binary outcome. Statistical Methods in Medical Research, 29(11), 3218–3234.
+#'
+#' Hu, L., Gu, C. Estimation of causal effects of multiple treatments in healthcare database studies with rare outcomes. Health Service Outcomes Research Method 21, 287–308 (2021).
+#'
+#' @import SuperLearner
 #' @export
 #'
 #' @examples
@@ -54,7 +63,15 @@
 #')
 #'ce_estimate(y = data$y, x = data$covariates, w = data$w,
 #'ndpost=100, method = "RA", estimand = "ATE")
-ce_estimate <- function(y, x, w, method, discard = "No", estimand, trim_perc, SL.library, reference_trt,  boot = FALSE,nboots, ndpost = 1000,caliper = 0.25,n_cluster  = 5,...){
+ce_estimate <- function(y, x, w, method, formula = NULL, discard = FALSE, estimand, trim_perc = NULL, SL.library, reference_trt,  boot = FALSE,nboots, verbose_boot = TRUE,ndpost = 1000,caliper = 0.25,n_cluster  = 5,...){
+  if (!(estimand %in% c("ATE", "ATT"))) stop("Estimand only supported for \"ATT\" or \"ATE\"", call. = FALSE)
+  if (!(method %in% c("RA", "VM", "BART", "TMLE", "IPTW-Multinomial", "IPTW-GBM", "IPTW-SL", "RAMS-Multinomial", "RAMS-GBM", "RAMS-SL"))) stop("Currently method is only supported for \"RA\", \"VM\", \"BART\", \"TMLE\", \"IPTW-Multinomial\", \"IPTW-GBM\", \"IPTW-SL\", \"RAMS-Multinomial\", \"RAMS-GBM\", \"RAMS-SL\". Please double check the entered method argument.", call. = FALSE)
+  if (estimand == "ATT" && !(reference_trt %in% unique(w))) stop(paste0("Please set the reference_trt from ", paste0(sort(unique(w)), collapse = ", "), "."), call. = FALSE)
+  if (sum(c(length(w) == length(y), length(w) == nrow(x), length(y) == nrow(x))) != 3) stop(paste0("The length of y, the length of w and the nrow for x should be equal. Please double check the input."), call. = FALSE)
+  if (!is.null(formula)){
+    x <- as.data.frame(stats::model.matrix(object = formula, cbind(y,x)))
+    x <- x[,!(names(x) == "(Intercept)")]
+  }
   if (method == "RA" && estimand == "ATE") {
     result <- ce_estimate_ra_ate(
       y = y,
@@ -87,7 +104,8 @@ ce_estimate <- function(y, x, w, method, discard = "No", estimand, trim_perc, SL
       reference_trt = reference_trt,
       caliper = caliper,
       n_cluster = n_cluster,
-      nboots = nboots
+      nboots = nboots,
+      verbose_boot = verbose_boot
     )
   } else if (method == "BART" && estimand == "ATE") {
     result <- ce_estimate_bart_ate(
@@ -113,22 +131,24 @@ ce_estimate <- function(y, x, w, method, discard = "No", estimand, trim_perc, SL
       w = w,
       SL.library = SL.library,...
     )
-  } else if (method %in% c("RAMS-Multinomial", "RAMS-Multinomial-Trim", "RAMS-GBM", "RAMS-GBM-Trim", "RAMS-SL", "RAMS-SL-Trim") && estimand == "ATE"&& boot == FALSE) {
+  } else if (method %in% c("RAMS-Multinomial", "RAMS-GBM", "RAMS-SL") && estimand == "ATE"&& boot == FALSE) {
     result <- ce_estimate_rams_ate(
       y = y,
       x = x,
       w = w,
-      method = method,...
+      method = method,
+      verbose_boot = verbose_boot,...
     )
-  } else if (method %in% c("RAMS-Multinomial", "RAMS-Multinomial-Trim", "RAMS-GBM", "RAMS-GBM-Trim", "RAMS-SL", "RAMS-SL-Trim") && estimand == "ATE"&& boot == TRUE) {
+  } else if (method %in% c("RAMS-Multinomial", "RAMS-GBM", "RAMS-SL") && estimand == "ATE"&& boot == TRUE) {
     result <- ce_estimate_rams_ate_boot(
       y = y,
       x = x,
       w = w,
       method = method,
-      nboots = nboots,...
+      nboots = nboots,
+      verbose_boot = verbose_boot,...
     )
-  } else if (method %in% c("RAMS-Multinomial", "RAMS-Multinomial-Trim", "RAMS-GBM", "RAMS-GBM-Trim", "RAMS-SL", "RAMS-SL-Trim") && estimand == "ATT" && boot == FALSE) {
+  } else if (method %in% c("RAMS-Multinomial", "RAMS-GBM", "RAMS-SL") && estimand == "ATT" && boot == FALSE) {
     result <- ce_estimate_rams_att(
       y = y,
       x = x,
@@ -136,31 +156,33 @@ ce_estimate <- function(y, x, w, method, discard = "No", estimand, trim_perc, SL
       method = method,
       reference_trt = reference_trt,...
     )
-  } else if (method %in% c("RAMS-Multinomial", "RAMS-Multinomial-Trim", "RAMS-GBM", "RAMS-GBM-Trim", "RAMS-SL", "RAMS-SL-Trim") && estimand == "ATT" && boot == TRUE) {
+  } else if (method %in% c("RAMS-Multinomial", "RAMS-GBM", "RAMS-SL") && estimand == "ATT" && boot == TRUE) {
     result <- ce_estimate_rams_att_boot(
       y = y,
       x = x,
       w = w,
       method = method,
       nboots = nboots,
-      reference_trt = reference_trt,...
+      reference_trt = reference_trt,
+      verbose_boot = verbose_boot,...
     )
-  } else if (method %in% c("IPTW-Multinomial", "IPTW-Multinomial-Trim", "IPTW-GBM", "IPTW-GBM-Trim", "IPTW-SL", "IPTW-SL-Trim") && estimand == "ATE"&& boot == FALSE) {
+  } else if (method %in% c("IPTW-Multinomial", "IPTW-GBM", "IPTW-SL") && estimand == "ATE"&& boot == FALSE) {
     result <- ce_estimate_iptw_ate(
       y = y,
       x = x,
       w = w,
       method = method,...
     )
-  }  else if (method %in% c("IPTW-Multinomial", "IPTW-Multinomial-Trim", "IPTW-GBM", "IPTW-GBM-Trim", "IPTW-SL", "IPTW-SL-Trim") && estimand == "ATE"&& boot == TRUE) {
+  }  else if (method %in% c("IPTW-Multinomial", "IPTW-GBM", "IPTW-SL") && estimand == "ATE"&& boot == TRUE) {
     result <- ce_estimate_iptw_ate_boot(
       y = y,
       x = x,
       w = w,
       method = method,
-      nboots = nboots,...
+      nboots = nboots,
+      verbose_boot = verbose_boot,...
     )
-  } else if (method %in% c("IPTW-Multinomial", "IPTW-Multinomial-Trim", "IPTW-GBM", "IPTW-GBM-Trim", "IPTW-SL", "IPTW-SL-Trim") && estimand == "ATT"&& boot == FALSE) {
+  } else if (method %in% c("IPTW-Multinomial", "IPTW-GBM", "IPTW-SL") && estimand == "ATT"&& boot == FALSE) {
     result <- ce_estimate_iptw_att(
       y = y,
       x = x,
@@ -168,14 +190,15 @@ ce_estimate <- function(y, x, w, method, discard = "No", estimand, trim_perc, SL
       method = method,
       reference_trt = reference_trt,...
     )
-  } else if (method %in% c("IPTW-Multinomial", "IPTW-Multinomial-Trim", "IPTW-GBM", "IPTW-GBM-Trim", "IPTW-SL", "IPTW-SL-Trim") && estimand == "ATT"&& boot == TRUE) {
+  } else if (method %in% c("IPTW-Multinomial", "IPTW-GBM", "IPTW-SL") && estimand == "ATT"&& boot == TRUE) {
     result <- ce_estimate_iptw_att_boot(
       y = y,
       x = x,
       w = w,
       method = method,
       reference_trt = reference_trt,
-      nboots = nboots,...
+      nboots = nboots,
+      verbose_boot = verbose_boot,...
     )
   }
   return(result)

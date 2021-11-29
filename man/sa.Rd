@@ -8,41 +8,44 @@ sa(
   x,
   y,
   w,
+  formula = NULL,
   prior_c_function,
   M1,
   M2 = NULL,
-  nCores,
+  nCores = 1,
   estimand,
   reference_trt,
   ...
 )
 }
 \arguments{
-\item{x}{dataframe including the treatment indicator and the covariates}
+\item{x}{A dataframe, including all the covariates but not treatments.}
 
-\item{y}{numeric vector for the binary outcome}
+\item{y}{A numeric vector (0, 1) representing a binary outcome.}
 
-\item{w}{numeric vector for the treatment indicator}
+\item{w}{A numeric vector representing the treatment groups.}
 
-\item{prior_c_function}{could be 1) a vector of characters indicating the prior distributions for the confounding functions.  Each character contains the random number generation code from the standard probability distributions in the stats package.  2) a vector of characters including the grid specifications for the confounding functions. It should be used  when  users  want  to  formulate  the  confounding  functions  as  scalar  values. 3)A matrix indicating the point mass prior for the confounding functions}
+\item{formula}{A \code{\link[stats]{formula}} object for the analysis. The default is to use all terms specified in \code{x}.}
 
-\item{M1}{a numeric value indicating the number of draws of the GPS from their posterior predictive distribution}
+\item{prior_c_function}{1) A vector of characters indicating the prior distributions for the confounding functions. Each character contains the random number generation code from the standard probability \code{\link[stats:Distributions]{distributions}} in the \code{\link[stats:stats-package]{stats}} package. 2) A vector of characters including the grid specifications for the confounding functions. It should be used when users want to formulate the  confounding  functions as scalar values. 3) A matrix indicating the point mass prior for the confounding functions}
 
-\item{M2}{a numeric value indicating the number of draws from the prior distributions of the confounding functions}
+\item{M1}{A numeric value indicating the number of draws of the GPS from the posterior predictive distribution}
 
-\item{nCores}{number of cores to use for parallel computing}
+\item{M2}{A numeric value indicating the number of draws from the prior distributions of the confounding functions}
 
-\item{estimand}{is a character string ("ATT", "ATE") representing the type of causal estimand}
+\item{nCores}{A numeric value indicating number of cores to use for parallel computing.}
 
-\item{reference_trt}{reference treatment group for the ATT effect}
+\item{estimand}{A character string representing the type of causal estimand. Only \code{"ATT"} or \code{"ATE"} is allowed. When the \code{estimand = "ATT"}, users also need to specify the reference treatment group by setting the \code{reference_trt} argument.}
+
+\item{reference_trt}{A numeric value indicating reference treatment group for ATT effect.}
 
 \item{...}{Other parameters that can be passed to BART functions}
 }
 \value{
-If prior_c_function include a grid specifications for the confounding functions, the output will be a list with 1) the drawn confounding function 2) w-1 causal estimand elements for ATT effect and w*(w-1)/2 causal estimand elements for ATE effect for each combination of the confounding functions. Otherwise, the output will be a data frame containing the estimation, standard error, lower and upper 95\% CI for the causal estimand in terms of RD.
+A list of causal estimands including risk difference (RD) between different treatment groups.
 }
 \description{
-Flexible Monte Carlo sensitivity analysis for unmeasured confounding
+The function \code{sa} implements the flexible sensitivity analysis approach for unmeasured confounding with multiple treatments and a binary outcome.
 }
 \examples{
 \donttest{
@@ -94,4 +97,7 @@ sensitivity_analysis_parallel_result <-
    estimand = "ATE",
  )
  }
+}
+\references{
+Hu, L., Ji, J. (2021). CIMTx: An R package for causal inference with multiple treatments using observational data. arXiv:2110.10276
 }

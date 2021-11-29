@@ -1,15 +1,4 @@
-#' Summarize posterior samples
-#'
-#' This function summarize posterior samples of RD, RR and OR. Please use our main function causal_multi_treat.R.
-#' @param RD_est vector of estimation for RD
-#' @param RR_est vector of estimation for RR
-#' @param OR_est vector of estimation for OR
-#'
-#' @return a list with w-1 elements for ATT effect; a list with w*(w-1)/2 elements for ATE effect. Each element of the list contains the estimation, standard error, lower and upper 95\% CI for RD/RR/OR
-#' @export
-#' @examples
-#' library(CIMTx)
-#' posterior_summary(RD_est = 1:10, RR_est = 11:20, OR_est = 1:10)
+
 posterior_summary <-  function(RD_est, RR_est, OR_est) {
     # Risk difference (RD)
     RD_mean = mean(RD_est)

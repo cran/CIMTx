@@ -1,20 +1,26 @@
 #' Flexible Monte Carlo sensitivity analysis for unmeasured confounding
 #'
-#' @param y numeric vector for the binary outcome
-#' @param x dataframe including the treatment indicator and the covariates
-#' @param w numeric vector for the treatment indicator
-#' @param prior_c_function could be 1) a vector of characters indicating the prior distributions for the confounding functions.  Each character contains the random number generation code from the standard probability distributions in the stats package.  2) a vector of characters including the grid specifications for the confounding functions. It should be used  when  users  want  to  formulate  the  confounding  functions  as  scalar  values. 3)A matrix indicating the point mass prior for the confounding functions
-#' @param M1 a numeric value indicating the number of draws of the GPS from their posterior predictive distribution
-#' @param M2 a numeric value indicating the number of draws from the prior distributions of the confounding functions
-#' @param nCores number of cores to use for parallel computing
-#' @param estimand is a character string ("ATT", "ATE") representing the type of causal estimand
-#' @param reference_trt reference treatment group for the ATT effect
+#' The function \code{sa} implements the flexible sensitivity analysis approach for unmeasured confounding with multiple treatments and a binary outcome.
+#'
+#' @param y A numeric vector (0, 1) representing a binary outcome.
+#' @param x A dataframe, including all the covariates but not treatments.
+#' @param w A numeric vector representing the treatment groups.
+#' @param formula A \code{\link[stats]{formula}} object for the analysis. The default is to use all terms specified in \code{x}.
+#' @param prior_c_function 1) A vector of characters indicating the prior distributions for the confounding functions. Each character contains the random number generation code from the standard probability \code{\link[stats:Distributions]{distributions}} in the \code{\link[stats:stats-package]{stats}} package. 2) A vector of characters including the grid specifications for the confounding functions. It should be used when users want to formulate the  confounding  functions as scalar values. 3) A matrix indicating the point mass prior for the confounding functions
+#' @param M1 A numeric value indicating the number of draws of the GPS from the posterior predictive distribution
+#' @param M2 A numeric value indicating the number of draws from the prior distributions of the confounding functions
+#' @param nCores A numeric value indicating number of cores to use for parallel computing.
+#' @param estimand A character string representing the type of causal estimand. Only \code{"ATT"} or \code{"ATE"} is allowed. When the \code{estimand = "ATT"}, users also need to specify the reference treatment group by setting the \code{reference_trt} argument.
+#' @param reference_trt A numeric value indicating reference treatment group for ATT effect.
 #' @param ... Other parameters that can be passed to BART functions
 #'
-#' @return If prior_c_function include a grid specifications for the confounding functions, the output will be a list with 1) the drawn confounding function 2) w-1 causal estimand elements for ATT effect and w*(w-1)/2 causal estimand elements for ATE effect for each combination of the confounding functions. Otherwise, the output will be a data frame containing the estimation, standard error, lower and upper 95\% CI for the causal estimand in terms of RD.
+#' @return A list of causal estimands including risk difference (RD) between different treatment groups.
+#'
 #' @export
 #' @importFrom foreach %dopar%
+#' @references
 #'
+#' Hu, L., Ji, J. (2021). CIMTx: An R package for causal inference with multiple treatments using observational data. arXiv:2110.10276
 #' @examples
 #' \donttest{
 #'lp_w_all <-
@@ -65,7 +71,14 @@
 #'    estimand = "ATE",
 #'  )
 #'  }
-sa <- function(x, y, w, prior_c_function, M1, M2 = NULL, nCores, estimand, reference_trt,... ){
+sa <- function(x, y, w, formula = NULL, prior_c_function, M1, M2 = NULL, nCores = 1, estimand, reference_trt,... ){
+  if (!(estimand %in% c("ATE", "ATT"))) stop("Estimand only supported for \"ATT\" or \"ATE\"", call. = FALSE)
+  if (estimand == "ATT" && !(reference_trt %in% unique(w))) stop(paste0("Please set the reference_trt from ", paste0(sort(unique(w)), collapse = ", "), "."), call. = FALSE)
+  if (sum(c(length(w) == length(y), length(w) == nrow(x), length(y) == nrow(x))) != 3) stop(paste0("The length of y, the length of w and the nrow for x should be equal. Please double check the input."), call. = FALSE)
+  if (!is.null(formula)){
+    x <- as.data.frame(stats::model.matrix(object = formula, cbind(y,x)))
+    x <- x[,!(names(x) == "(Intercept)")]
+  }
   if (any(stringr::str_detect(prior_c_function, "seq")) == FALSE && is.numeric(prior_c_function) == FALSE){
     prior_c_function_all <- matrix(NA, ncol = length(prior_c_function), nrow = M2)
     for (i in 1:length(prior_c_function)){
@@ -160,7 +173,7 @@ sa <- function(x, y, w, prior_c_function, M1, M2 = NULL, nCores, estimand, refer
 
           # set.seed(seed)
           # fit the bart model to estimate causal effect
-          bart_mod = BART::wbart(x.train = cbind(x, w),  y.train = train_y, printevery = 10000,...)
+          bart_mod = BART::wbart(x.train = cbind(x, w),  y.train = train_y, printevery = 10000)
           n_trt <- length(unique(w))
           for (k in 1:n_trt){
             assign(paste0("predict_",k), BART::pwbart(cbind(x, w = k), bart_mod$treedraws))
@@ -204,26 +217,22 @@ sa <- function(x, y, w, prior_c_function, M1, M2 = NULL, nCores, estimand, refer
           counter <- counter +1
         }
       }
-
-      return(c(result_final, list(c_functions = prior_c_function_used, grid_index = c_index_with_grid)))
+      result_final <- c(result_final, list(c_functions = prior_c_function_used, grid_index = c_index_with_grid))
+      class(result_final) <- "CIMTx_sa_grid"
+      return(result_final)
     }
     if (any(stringr::str_detect(prior_c_function, "seq")) == FALSE){
       result_final <- NULL
       counter <- 1
       for (k in 1:(n_trt-1)){
         for (m in (k + 1):n_trt){
-          assign(paste0("mean",k,m), mean(result_list_final[[paste0("ATE_",k,m)]]))
-          assign(paste0("sd",k,m), stats::sd(result_list_final[[paste0("ATE_",k,m)]]))
-          assign(paste0("lower",k,m), eval(parse(text = paste0("mean",k,m)))-1.96*eval(parse(text = paste0("sd",k,m))))
-          assign(paste0("upper",k,m), eval(parse(text = paste0("mean",k,m)))+1.96*eval(parse(text = paste0("sd",k,m))))
-          assign(paste0("RD",k,m), round(c(eval(parse(text = paste0("mean",k,m))), eval(parse(text = paste0("sd",k,m))), eval(parse(text = paste0("lower",k,m))), eval(parse(text = paste0("upper",k,m)))),2))
-
-          result_final <- rbind(result_final, eval(parse(text = paste0("RD",k,m))))
-          rownames(result_final)[[counter]] <- paste0("ATE",k,m)
+          result_final <- c(result_final, list(result_list_final[[paste0("ATE_",k,m)]]))
+          names(result_final)[[counter]] <- paste0("ATE_RD",k,m)
           counter <- counter +1
         }
       }
-      colnames(result_final) <- c("EST","SE","LOWER","UPPER")
+      # colnames(result_final) <- c("EST","SE","LOWER","UPPER")
+      class(result_final) <- "CIMTx_ATE_sa"
       return(result_final)
     }
   }
@@ -295,25 +304,21 @@ sa <- function(x, y, w, prior_c_function, M1, M2 = NULL, nCores, estimand, refer
         names(result_final)[[counter]] <- paste0("ATT",reference_trt,w_ind_no_reference[k])
         counter <- counter +1
       }
-      return(c(result_final, list(c_functions = prior_c_function_used, grid_index = c_index_with_grid)))
+      result_final <- c(result_final, list(c_functions = prior_c_function_used, grid_index = c_index_with_grid))
+      class(result_final) <- "CIMTx_sa_grid"
+      return(result_final)
     }
     if (any(stringr::str_detect(prior_c_function, "seq")) == FALSE){
       result_final <- NULL
       counter <- 1
       for (k in 1:(n_trt-1)){
-        assign(paste0("mean",reference_trt,w_ind_no_reference[k]), mean(result_list_final[[paste0("ATT_",reference_trt,w_ind_no_reference[k])]]))
-        assign(paste0("sd",reference_trt,w_ind_no_reference[k]), stats::sd(result_list_final[[paste0("ATT_",reference_trt,w_ind_no_reference[k])]]))
-        assign(paste0("lower",reference_trt,w_ind_no_reference[k]), eval(parse(text = paste0("mean",reference_trt,w_ind_no_reference[k])))- 1.96 * eval(parse(text = paste0("sd",reference_trt,w_ind_no_reference[k]))))
-        assign(paste0("upper",reference_trt,w_ind_no_reference[k]), eval(parse(text = paste0("mean",reference_trt,w_ind_no_reference[k])))+ 1.96 * eval(parse(text = paste0("sd",reference_trt,w_ind_no_reference[k]))))
-        assign(paste0("RD",reference_trt,w_ind_no_reference[k]), round(c(eval(parse(text = paste0("mean",reference_trt,w_ind_no_reference[k]))), eval(parse(text = paste0("sd",reference_trt,w_ind_no_reference[k]))), eval(parse(text = paste0("lower",reference_trt,w_ind_no_reference[k]))), eval(parse(text = paste0("upper",reference_trt,w_ind_no_reference[k])))),2))
+        result_final <- c(result_final, list(result_list_final[[paste0("ATT_",reference_trt,w_ind_no_reference[k])]]))
 
-        result_final <- rbind(result_final, eval(parse(text = paste0("RD",reference_trt,w_ind_no_reference[k]))))
-        rownames(result_final)[[counter]] <- paste0("ATT",reference_trt,w_ind_no_reference[k])
+        names(result_final)[[counter]] <- paste0("ATT_RD",reference_trt,w_ind_no_reference[k])
         counter <- counter +1
       }
-      colnames(result_final) <- c("EST","SE","LOWER","UPPER")
-      return(result_final)
     }
+    class(result_final) <- "CIMTx_ATT_sa"
+    return(result_final)
   }
-
 }

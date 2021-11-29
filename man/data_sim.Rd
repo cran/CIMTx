@@ -19,40 +19,40 @@ data_sim(
 )
 }
 \arguments{
-\item{sample_size}{total number of units.}
+\item{sample_size}{A numeric value indicating the total number of units.}
 
-\item{n_trt}{the number of treatments}
+\item{n_trt}{A numeric value indicating the number of treatments.}
 
-\item{X}{a vector of characters representing covariates, with each covariate being generated from the standard probability distributions in the stats package}
+\item{X}{A vector of characters representing covariates, with each covariate being generated from the standard probability \code{\link[stats:Distributions]{distributions}} in the \code{\link[stats:stats-package]{stats}} package.}
 
-\item{lp_y}{a vector of characters of length n_trt, representing the linear effects in the outcome generating model}
+\item{lp_y}{A vector of characters of length \code{n_trt}, representing the linear effects in the outcome generating model.}
 
-\item{nlp_y}{a vector of characters of length n_trt, representing the nonlinear effects in the outcome generating model}
+\item{nlp_y}{A vector of characters of length \code{n_trt}, representing the nonlinear effects in the outcome generating model.}
 
-\item{align}{logical,indicating whether the predictors in the treatment assignment model are the same as the predictors for the outcome generating model. The default is TRUE. If the argument is set to FALSE, users need to specify additional two arguments lp_w and nlp_w.}
+\item{align}{A logical indicating whether the predictors in the treatment assignment model are the same as the predictors for the outcome generating model. The default is \code{TRUE}. If the argument is set to \code{FALSE}, users need to specify additional two arguments \code{lp_w} and \code{nlp_w}.}
 
-\item{tau}{a numeric vector of length n_trt inducing different outcome event probabilities across treatment groups}
+\item{tau}{A numeric vector of length \code{n_trt} inducing different outcome event probabilities across treatment groups.}
 
-\item{delta}{a numeric vector of length n_trt-1 inducing different ratio of units across treatment groups.}
+\item{delta}{A numeric vector of length \code{n_trt}-1 inducing different ratio of units across treatment groups.}
 
-\item{psi}{a numeric value for the parameter psi in the treatment assignment model, governing the sparsity of covariate overlap.}
+\item{psi}{A numeric value for the parameter governing the sparsity of covariate overlap.}
 
-\item{lp_w}{is a vector of characters of length n_trt - 1, representing in the treatment assignment model}
+\item{lp_w}{is a vector of characters of length \code{n_trt} - 1, representing in the treatment assignment model}
 
-\item{nlp_w}{is a vector of characters of length n_trt - 1, representing in the treatment assignment model}
+\item{nlp_w}{is a vector of characters of length \code{n_trt} - 1, representing in the treatment assignment model}
 }
 \value{
-list with 7 elements for simulated data. It contains
+A list with 7 elements for simulated data. It contains
 \item{covariates:}{X matrix}
 \item{w:}{treatment indicators}
 \item{y:}{observed binary outcomes}
 \item{y_prev:}{outcome prevalence rates}
 \item{ratio_of_units:}{the proportions of units in each treatment group}
 \item{overlap_fig:}{the visualization of covariate overlap via boxplots of the distributions of true GPS}
-\item{Y_true_matrix:}{simulated true outcome in each treatment group}
+\item{Y_true:}{simulated true outcome in each treatment group}
 }
 \description{
-This function simulate data for binary outcome with multiple treatments. Users can adjust the follwoing 7 design factors: (1) sample size, (2) ratio of units across treatment groups, (3) whether the treatment assignment model and the outcome generating model are linear or nonlinear, (4) whether the covariates that best predict the treatment also predict the outcome well, (5) whether the response surfaces are parallel across treatment groups, (6) outcome prevalence, and (7) degree of covariate overlap.
+The function \code{data_sim} simulate data for binary outcome with multiple treatments. Users can adjust the following 7 design factors: (1) sample size, (2) ratio of units across treatment groups, (3) whether the treatment assignment model and the outcome generating model are linear or nonlinear, (4) whether the covariates that best predict the treatment also predict the outcome well, (5) whether the response surfaces are parallel across treatment groups, (6) outcome prevalence, and (7) degree of covariate overlap.
 }
 \examples{
 library(CIMTx)
@@ -85,4 +85,7 @@ data <- data_sim(
  delta = c(0.5,0.5),
  psi = 1
 )
+}
+\references{
+Hu, L., Ji, J. (2021). CIMTx: An R package for causal inference with multiple treatments using observational data. arXiv:2110.10276
 }

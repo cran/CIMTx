@@ -1,30 +1,34 @@
 #' Simulate data for binary outcome with multiple treatments
 #'
-#' This function simulate data for binary outcome with multiple treatments. Users can adjust the follwoing 7 design factors: (1) sample size, (2) ratio of units across treatment groups, (3) whether the treatment assignment model and the outcome generating model are linear or nonlinear, (4) whether the covariates that best predict the treatment also predict the outcome well, (5) whether the response surfaces are parallel across treatment groups, (6) outcome prevalence, and (7) degree of covariate overlap.
+#' The function \code{data_sim} simulate data for binary outcome with multiple treatments. Users can adjust the following 7 design factors: (1) sample size, (2) ratio of units across treatment groups, (3) whether the treatment assignment model and the outcome generating model are linear or nonlinear, (4) whether the covariates that best predict the treatment also predict the outcome well, (5) whether the response surfaces are parallel across treatment groups, (6) outcome prevalence, and (7) degree of covariate overlap.
 #'
-#' @param sample_size total number of units.
-#' @param n_trt the number of treatments
-#' @param X a vector of characters representing covariates, with each covariate being generated from the standard probability distributions in the stats package
-#' @param lp_y a vector of characters of length n_trt, representing the linear effects in the outcome generating model
-#' @param nlp_y a vector of characters of length n_trt, representing the nonlinear effects in the outcome generating model
-#' @param align logical,indicating whether the predictors in the treatment assignment model are the same as the predictors for the outcome generating model. The default is TRUE. If the argument is set to FALSE, users need to specify additional two arguments lp_w and nlp_w.
-#' @param tau a numeric vector of length n_trt inducing different outcome event probabilities across treatment groups
-#' @param delta a numeric vector of length n_trt-1 inducing different ratio of units across treatment groups.
-#' @param psi a numeric value for the parameter psi in the treatment assignment model, governing the sparsity of covariate overlap.
-#' @param lp_w is a vector of characters of length n_trt - 1, representing in the treatment assignment model
-#' @param nlp_w is a vector of characters of length n_trt - 1, representing in the treatment assignment model
+#' @param sample_size A numeric value indicating the total number of units.
+#' @param n_trt A numeric value indicating the number of treatments.
+#' @param X A vector of characters representing covariates, with each covariate being generated from the standard probability \code{\link[stats:Distributions]{distributions}} in the \code{\link[stats:stats-package]{stats}} package.
+#' @param lp_y A vector of characters of length \code{n_trt}, representing the linear effects in the outcome generating model.
+#' @param nlp_y A vector of characters of length \code{n_trt}, representing the nonlinear effects in the outcome generating model.
+#' @param align A logical indicating whether the predictors in the treatment assignment model are the same as the predictors for the outcome generating model. The default is \code{TRUE}. If the argument is set to \code{FALSE}, users need to specify additional two arguments \code{lp_w} and \code{nlp_w}.
+#' @param tau A numeric vector of length \code{n_trt} inducing different outcome event probabilities across treatment groups.
+#' @param delta A numeric vector of length \code{n_trt}-1 inducing different ratio of units across treatment groups.
+#' @param psi A numeric value for the parameter governing the sparsity of covariate overlap.
+#' @param lp_w is a vector of characters of length \code{n_trt} - 1, representing in the treatment assignment model
+#' @param nlp_w is a vector of characters of length \code{n_trt} - 1, representing in the treatment assignment model
 #'
 #' @import dplyr
 #'
-#' @return list with 7 elements for simulated data. It contains
+#' @return A list with 7 elements for simulated data. It contains
 #' \item{covariates:}{X matrix}
 #' \item{w:}{treatment indicators}
 #' \item{y:}{observed binary outcomes}
 #' \item{y_prev:}{outcome prevalence rates}
 #' \item{ratio_of_units:}{the proportions of units in each treatment group}
 #' \item{overlap_fig:}{the visualization of covariate overlap via boxplots of the distributions of true GPS}
-#' \item{Y_true_matrix:}{simulated true outcome in each treatment group}
+#' \item{Y_true:}{simulated true outcome in each treatment group}
 #' @export
+#'
+#' @references
+#'
+#' Hu, L., Ji, J. (2021). CIMTx: An R package for causal inference with multiple treatments using observational data. arXiv:2110.10276
 #'
 #' @examples
 #' library(CIMTx)
@@ -127,14 +131,14 @@ data_sim <-
     assign(paste0("Y",j,"_final"), stats::rbinom(n = sample_size, size = 1, prob = eval(parse(text = paste0("y",j)))))
   }
 
-  Y_true_matrix <- matrix(NA, nrow = sample_size, ncol = n_trt)
+  Y_true <- matrix(NA, nrow = sample_size, ncol = n_trt)
   for (i in 1:n_trt){
-    Y_true_matrix[,i] <- eval(parse(text = paste0("Y",i,"_final")))
+    Y_true[,i] <- eval(parse(text = paste0("Y",i,"_final")))
   }
-  Y_true_matrix_with_treatment <- cbind(Y_true_matrix, w)
+  Y_true_with_treatment <- cbind(Y_true, w)
 
   #observed outcomes
-  Yobs = apply(Y_true_matrix_with_treatment, 1, function(x) x[1:n_trt][x[n_trt+1]])
+  Yobs = apply(Y_true_with_treatment, 1, function(x) x[1:n_trt][x[n_trt+1]])
 
   y_prev <- tibble(w = as.character(w), Yobs) %>%
     group_by(w) %>%
@@ -155,7 +159,7 @@ data_sim <-
       y_prev = y_prev,
       ratio_of_units = round(table(w) / length(w),2),
       overlap_fig = p_covariate_overlap,
-      Y_true_matrix = Y_true_matrix
+      Y_true = Y_true
     )
   )
 }

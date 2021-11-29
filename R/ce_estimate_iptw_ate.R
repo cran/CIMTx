@@ -1,54 +1,10 @@
-#' Inverse probability of treatment weighting (IPTW) for ATE estimation
-#'
-#'This function implements the IPTW method when estimand is ATE. Please use our main function ce_estimate.R.
-#'
-#' @param y numeric vector for the binary outcome
-#' @param x a dataframe, including all the covariates but not treatments
-#' @param w numeric vector for the treatment indicator
-#' @param method a character string. Users can selected from the following methods including "IPTW-Multinomial", "IPTW-GBM", "IPTW-SL"
-#' @param ... Other parameters that can be passed through the twang::GBM() function
-#'
-#' @return a list with w*(w-1)/2 elements for ATE effect. Each element of the list contains the estimation, standard error, lower and upper 95\% CI for RD/RR/OR
-#' @export
-#' @examples
-#'lp_w_all <-
-#'  c(".4*x1 + .1*x2  - .1*x4 + .1*x5",    # w = 1
-#'    ".2 * x1 + .2 * x2  - .2 * x4 - .3 * x5")  # w = 2
-#'nlp_w_all <-
-#'  c("-.5*x1*x4  - .1*x2*x5", # w = 1
-#'    "-.3*x1*x4 + .2*x2*x5")# w = 2
-#'lp_y_all <- rep(".2*x1 + .3*x2 - .1*x3 - .1*x4 - .2*x5", 3)
-#'nlp_y_all <- rep(".7*x1*x1  - .1*x2*x3", 3)
-#'X_all <- c(
-#'  "rnorm(300, 0, 0.5)",# x1
-#'  "rbeta(300, 2, .4)",   # x2
-#'  "runif(300, 0, 0.5)",# x3
-#'  "rweibull(300,1,2)",  # x4
-#'  "rbinom(300, 1, .4)"# x5
-#')
 
-#'set.seed(111111)
-#'data <- data_sim(
-#'  sample_size = 300,
-#'  n_trt = 3,
-#'  X = X_all,
-#'  lp_y = lp_y_all,
-#'  nlp_y  = nlp_y_all,
-#'  align = FALSE,
-#'  lp_w = lp_w_all,
-#'  nlp_w = nlp_w_all,
-#'  tau = c(-1.5,0,1.5),
-#'  delta = c(0.5,0.5),
-#'  psi = 1
-#')
-#'ce_estimate_iptw_ate(y = data$y, x = data$covariates,
-#'w = data$w, ndpost=100, method = "IPTW-Multinomial")
 ce_estimate_iptw_ate <- function (y, w, x, method,...){
 
   xwdata = as.data.frame(cbind(x, w = w))
   n_trt <- length(unique(w))
-
-  if (method == "IPTW-Multinomial") {
+  trim_perc <- parent.frame()$trim_perc
+  if (method == "IPTW-Multinomial" && is.null(trim_perc)) {
     psmod2 <-  nnet::multinom(w~., data = xwdata,trace = FALSE)
     pred_ps <- stats::fitted(psmod2)
     for (i in 1:n_trt){
@@ -77,9 +33,10 @@ ce_estimate_iptw_ate <- function (y, w, x, method,...){
       }
     }
     result_list_multinomial <- c(result_list_multinomial, list(weight = weight_glm), list(method = method))
+    class(result_list_multinomial) <- "CIMTx_IPTW"
     return(result_list_multinomial)
-  } else if (method == "IPTW-Multinomial-Trim") {
-    trim_perc <- parent.frame()$trim_perc
+  } else if (method == "IPTW-Multinomial" && !is.null(trim_perc)) {
+
     psmod2 <-  nnet::multinom(w~., data = xwdata,trace = FALSE)
     pred_ps <- stats::fitted(psmod2)
     for (i in 1:n_trt){
@@ -108,10 +65,11 @@ ce_estimate_iptw_ate <- function (y, w, x, method,...){
         result_list_multinomial_trim <- c(result_list_multinomial_trim, result_once_list)
       }
     }
-    result_list_multinomial_trim <- c(result_list_multinomial_trim, list(weight = weight_glm_trim), list(method = method))
+    result_list_multinomial_trim <- c(result_list_multinomial_trim, list(weight = weight_glm_trim), list(method = paste0(method, "-Trim")))
+    class(result_list_multinomial_trim) <- "CIMTx_IPTW"
     return(result_list_multinomial_trim)
 
-  } else if (method == "IPTW-GBM") {
+  } else if (method == "IPTW-GBM" && is.null(trim_perc)) {
     temp<- noquote(names(x))
     strFormula  = sprintf("w~%s", paste(temp, sep = "",collapse="+"))
     psmod <- twang::mnps(stats::as.formula(strFormula),
@@ -140,12 +98,13 @@ ce_estimate_iptw_ate <- function (y, w, x, method,...){
       }
     }
     result_list_gbm <- c(result_list_gbm, list(weight = wt_hat), list(method = method))
+    class(result_list_gbm) <- "CIMTx_IPTW"
     return(result_list_gbm)
-  } else if (method == "IPTW-GBM-Trim") {
+  } else if (method == "IPTW-GBM"&& !is.null(trim_perc)) {
     # n.trees <- parent.frame()$n.trees
     # interaction.depth <- parent.frame()$interaction.depth
     es.max.ATE <- NULL
-    trim_perc <- parent.frame()$trim_perc
+    # trim_perc <- parent.frame()$trim_perc
     temp<- noquote(names(x))
     strFormula  = sprintf("w~%s", paste(temp, sep = "",collapse="+"))
     psmod<-twang::mnps(stats::as.formula(strFormula),
@@ -174,10 +133,12 @@ ce_estimate_iptw_ate <- function (y, w, x, method,...){
         result_list_gbm_trim <- c(result_list_gbm_trim, result_once_list)
       }
     }
-    result_list_gbm_trim <- c(result_list_gbm_trim, list(weight = wt_hat_trunc), list(method = method))
+    result_list_gbm_trim <- c(result_list_gbm_trim, list(weight = wt_hat_trunc), list(method = paste0(method, "-Trim")))
+    class(result_list_gbm_trim) <- "CIMTx_IPTW"
     return(result_list_gbm_trim)
-  } else if (method == "IPTW-SL") {
+  } else if (method == "IPTW-SL"&& is.null(trim_perc)) {
     SL.library <- parent.frame()$SL.library
+    if (any((SL.library %in% getNamespaceExports("SuperLearner")[grepl(pattern = "^[S]L", getNamespaceExports("SuperLearner"))]) == F)) stop("SL.library argument unrecgonized; please use listWrappers() in SuperLearner to find the list of supported values", call. = FALSE)
       weightit_superlearner <- WeightIt::weightit(w~., data = xwdata,
                                                   method = "super", estimand = "ATE",SL.library = SL.library,...)
     weight_superlearner <- weightit_superlearner$weights
@@ -201,10 +162,12 @@ ce_estimate_iptw_ate <- function (y, w, x, method,...){
       }
     }
     result_list_superlearner <- c(result_list_superlearner, list(weight = weight_superlearner), list(method = method))
+    class(result_list_superlearner) <- "CIMTx_IPTW"
     return(result_list_superlearner)
-  } else if (method == "IPTW-SL-Trim") {
+  } else if (method == "IPTW-SL"&& !is.null(trim_perc)) {
     SL.library <- parent.frame()$SL.library
-    trim_perc <- parent.frame()$trim_perc
+    if (any((SL.library %in% getNamespaceExports("SuperLearner")[grepl(pattern = "^[S]L", getNamespaceExports("SuperLearner"))]) == F)) stop("SL.library argument unrecgonized; please use listWrappers() in SuperLearner to find the list of supported values", call. = FALSE)
+    # trim_perc <- parent.frame()$trim_perc
       weightit_superlearner <- WeightIt::weightit(w~., data = xwdata,
                                                   method = "super", estimand = "ATE",
                                                   SL.library = SL.library,...)
@@ -228,7 +191,8 @@ ce_estimate_iptw_ate <- function (y, w, x, method,...){
         result_list_superlearner_trim <- c(result_list_superlearner_trim, result_once_list)
       }
     }
-    result_list_superlearner_trim <- c(result_list_superlearner_trim, list(weight = weight_superlearner_trim), list(method = method))
+    result_list_superlearner_trim <- c(result_list_superlearner_trim, list(weight = weight_superlearner_trim), list(method = paste0(method, "-Trim")))
+    class(result_list_superlearner_trim) <- "CIMTx_IPTW"
     return(result_list_superlearner_trim)
 
   }

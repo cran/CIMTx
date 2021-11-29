@@ -1,58 +1,7 @@
-#' Targeted Maximum Likelihood (TMLE) for ATE estimation
-#'
-#'This function implements the TMLE method when estimand is ATE. Please use our main function ce_estimate.R.
-#'
-#' This function implements the TMLE method. Please use our main function causal_multi_treat.R.
-#' @param y numeric vector for the binary outcome
-#'
-#' @param w numeric vector for the treatment indicator
-#' @param x data frame containing the treatment indicator and covariates
-#' @param SL.library a character vector of prediction algorithms. A list of functions included in the SuperLearner package can be found with listWrappers()
-#' @param ... Other arguments
-#'
-#' @importFrom magrittr "%>%"
-#' @import SuperLearner
-#' @export
-#' @return a list with w*(w-1)/2 elements for ATE effect. Each element of the list contains the estimation for RD/RR/OR
-#' @examples
-#' \donttest{
-#' library(CIMTx)
-#'lp_w_all <-
-#'  c(".4*x1 + .1*x2  - .1*x4 + .1*x5",    # w = 1
-#'    ".2 * x1 + .2 * x2  - .2 * x4 - .3 * x5")  # w = 2
-#'nlp_w_all <-
-#'  c("-.5*x1*x4  - .1*x2*x5", # w = 1
-#'    "-.3*x1*x4 + .2*x2*x5")# w = 2
-#'lp_y_all <- rep(".2*x1 + .3*x2 - .1*x3 - .1*x4 - .2*x5", 3)
-#'nlp_y_all <- rep(".7*x1*x1  - .1*x2*x3", 3)
-#'X_all <- c(
-#'  "rnorm(300, 0, 0.5)",# x1
-#'  "rbeta(300, 2, .4)",   # x2
-#'  "runif(300, 0, 0.5)",# x3
-#'  "rweibull(300,1,2)",  # x4
-#'  "rbinom(300, 1, .4)"# x5
-#')
 
-#'set.seed(111111)
-#'data <- data_sim(
-#'  sample_size = 300,
-#'  n_trt = 3,
-#'  X = X_all,
-#'  lp_y = lp_y_all,
-#'  nlp_y  = nlp_y_all,
-#'  align = FALSE,
-#'  lp_w = lp_w_all,
-#'  nlp_w = nlp_w_all,
-#'  tau = c(-1.5,0,1.5),
-#'  delta = c(0.5,0.5),
-#'  psi = 1
-#')
-#'ce_estimate_tmle_ate(y = data$y, x = data$covariates ,
-#'w = data$w, SL.library = c("SL.glm", "SL.mean"))
-#' }
 
 ce_estimate_tmle_ate <- function(y, w, x, SL.library,...){
-
+  if (any((SL.library %in% getNamespaceExports("SuperLearner")[grepl(pattern = "^[S]L", getNamespaceExports("SuperLearner"))]) == F)) stop("SL.library argument unrecgonized; please use listWrappers() in SuperLearner to find the list of supported values", call. = FALSE)
   n_trt <- length(unique(w))
   Xmat <- cbind(w, x)
   for (i in 1:n_trt){
@@ -178,7 +127,7 @@ ce_estimate_tmle_ate <- function(y, w, x, SL.library,...){
   for (i in 1:n_trt){
     assign(paste0("upper_",i, "_hat"), w_result_one_repetition %>% dplyr::select("CI2") %>% dplyr::slice(i) %>% dplyr::pull("CI2"))
   }
-  result_list <- NULL
+  result_final <- NULL
   for (i in 1:(n_trt-1)){
     result_once <- NULL
     for (j in (i + 1):n_trt){
@@ -188,10 +137,10 @@ ce_estimate_tmle_ate <- function(y, w, x, SL.library,...){
       result_once <- rbind(eval(parse(text = paste0("round(RD",i,j,",2)"))), eval(parse(text = paste0("round(RR",i,j,",2)"))), eval(parse(text = paste0("round(OR",i,j,",2)"))))
       colnames(result_once) <- "EST"
       rownames(result_once) <- c("RD", "RR", "OR")
-      result_once_list <- list(result_once)
-      names(result_once_list) <- paste0("ATE",i,j)
-      result_list <- c(result_list, result_once_list)
+      # result_once_list <- list(result_once)
+      colnames(result_once) <- paste0("ATE",i,j)
+      result_final <- cbind(result_final, result_once)
     }
   }
-  return(result_list)
+  return(result_final)
 }

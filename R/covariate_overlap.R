@@ -1,18 +1,4 @@
-#' Covariate overlap plot
-#'
-#' This function plot the boxplots of the distributions of true GPS. Please use our data_sim.R to get the figure.
-#'
-#' @param treatment Treatment indicators
-#' @param prob Probability of receving the outcome
-#'
-#'
-#' @return a ggplot object
-#' @export
-#'
-#' @examples
-#'probs_all <- matrix(runif(300,0,1), ncol = 3)
-#'trt <- sample(c(1,2,3),100, replace = TRUE)
-#'covariate_overlap(treatment = trt, prob = probs_all)
+
 covariate_overlap = function(treatment, prob){
   treatment = as.factor(treatment)
   df = data.frame(cbind(treatment, prob))

@@ -5,12 +5,13 @@
 #' @param ... Objects from IPTW related methods
 #'
 #' @return A ggplot figure
-#' @export plot_boxplot
+#' @export
 #'
 #' @examples
 #' iptw_object_example <- list(weight = rnorm(1000,1,1), method = "IPTW-SL")
-#' plot_boxplot(iptw_object_example)
-plot_boxplot <- function(...){
+#' class(iptw_object_example) <- "CIMTx_IPTW"
+#' plot(iptw_object_example)
+plot.CIMTx_IPTW <- function(...){
   iptw_object <- list(...)
   weight <- NULL
   method <- NULL
