@@ -1,52 +1,38 @@
+#' Posterior distribution summary
+#'
+#' @param rd_est Posterior distribution for rd estimates.
+#' @param rr_est Posterior distribution for rr estimates.
+#' @param or_est Posterior distribution for rr estimates.
+#'
+#' @return A list of causal estimands including risk difference (rd),
+#' odds ratios (or) and relative risk (rr)
+#' between different treatment groups.
+posterior_summary <- function(rd_est, rr_est, or_est) {
+  # Risk difference (rd)
+  rd_mean <- mean(rd_est)
+  rd_se <- stats::sd(rd_est)
+  rd_lower <- stats::quantile(rd_est, probs = 0.025, na.rm = T)
+  rd_upper <- stats::quantile(rd_est, probs = 0.975, na.rm = T)
 
-posterior_summary <-  function(RD_est, RR_est, OR_est) {
-    # Risk difference (RD)
-    RD_mean = mean(RD_est)
-    RD_se = stats::sd(RD_est)
-    RD_lower = stats::quantile(RD_est, probs=0.025, na.rm = T)
-    RD_upper = stats::quantile(RD_est, probs=0.975, na.rm = T)
+  # Relative risk (rr)
+  rr_mean <- mean(rr_est)
+  rr_se <- stats::sd(rr_est)
+  rr_lower <- stats::quantile(rr_est, probs = 0.025, na.rm = T)
+  rr_upper <- stats::quantile(rr_est, probs = 0.975, na.rm = T)
 
-    # Relative risk (RR)
-    RR_mean = mean(RR_est)
-    RR_se = stats::sd(RR_est)
-    RR_lower = stats::quantile(RR_est, probs=0.025, na.rm = T)
-    RR_upper = stats::quantile(RR_est, probs=0.975, na.rm = T)
+  # Odds ratio (or)
+  or_mean <- mean(or_est)
+  or_se <- stats::sd(or_est)
+  or_lower <- stats::quantile(or_est, probs = 0.025, na.rm = T)
+  or_upper <- stats::quantile(or_est, probs = 0.975, na.rm = T)
 
-    # Odds ratio (OR)
-    OR_mean = mean(OR_est)
-    OR_se = stats::sd(OR_est)
-    OR_lower = stats::quantile(OR_est, probs=0.025, na.rm = T)
-    OR_upper = stats::quantile(OR_est, probs=0.975, na.rm = T)
+  # summarize results
+  rd <- c(rd_mean, rd_se, rd_lower, rd_upper)
+  rr <- c(rr_mean, rr_se, rr_lower, rr_upper)
+  or <- c(or_mean, or_se, or_lower, or_upper)
 
-    # summarize results
-    RD = c(RD_mean, RD_se, RD_lower, RD_upper)
-    RR = c(RR_mean, RR_se, RR_lower, RR_upper)
-    OR = c(OR_mean, OR_se, OR_lower, OR_upper)
-
-    res = rbind(RD, RR, OR)
-    colnames(res) = c("EST","SE","LOWER","UPPER")
-    return(res)
+  res <- rbind(rd, rr, or)
+  rownames(res) <- c("RD", "RR", "OR")
+  colnames(res) <- c("EST", "SE", "LOWER", "UPPER")
+  return(res)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

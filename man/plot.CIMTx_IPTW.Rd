@@ -13,10 +13,32 @@
 A ggplot figure
 }
 \description{
-This function make the boxplot plot for the weights estimated by different IPTW methods. The inputs of the function are from the output of ce_estimate.R function when the methods are "IPTW-Multinomial", "IPTW-GBM", "IPTW-SL".
+This function make the boxplot plot for the weights estimated by
+different IPTW methods.
+The inputs of the function are from the output of ce_estimate.R function
+when the methods are "IPTW-Multinomial", "IPTW-GBM", "IPTW-SL".
 }
 \examples{
-iptw_object_example <- list(weight = rnorm(1000,1,1), method = "IPTW-SL")
+iptw_object_example <- list(weight = rnorm(1000, 1, 1), method = "IPTW-SL")
 class(iptw_object_example) <- "CIMTx_IPTW"
 plot(iptw_object_example)
+}
+\references{
+Hadley Wickham (2019).
+\emph{stringr: Simple, Consistent Wrappers for Common String Operations}.
+R package version 1.4.0.
+URL:\url{https://CRAN.R-project.org/package=stringr}
+
+Hadley Wickham, Romain François, Lionel Henry and Kirill Müller (2021).
+\emph{dplyr: A Grammar of Data Manipulation}.
+R package version 1.0.7.
+URL: \url{https://CRAN.R-project.org/package=dplyr}
+
+H. Wickham. \emph{ggplot2: Elegant Graphics for Data Analysis}.
+Springer-Verlag New York, 2016.
+
+Claus O. Wilke (2020).
+\emph{cowplot: Streamlined Plot Theme and Plot Annotations for 'ggplot2'}.
+R package version 1.1.1.
+URL:\url{https://CRAN.R-project.org/package=cowplot}
 }

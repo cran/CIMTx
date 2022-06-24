@@ -10,9 +10,9 @@ sa(
   w,
   formula = NULL,
   prior_c_function,
-  M1,
-  M2 = NULL,
-  nCores = 1,
+  m1,
+  m2 = NULL,
+  n_cores = 1,
   estimand,
   reference_trt,
   ...
@@ -25,79 +25,127 @@ sa(
 
 \item{w}{A numeric vector representing the treatment groups.}
 
-\item{formula}{A \code{\link[stats]{formula}} object for the analysis. The default is to use all terms specified in \code{x}.}
+\item{formula}{A \code{\link[stats]{formula}} object for the analysis.
+The default is to use all terms specified in \code{x}.}
 
-\item{prior_c_function}{1) A vector of characters indicating the prior distributions for the confounding functions. Each character contains the random number generation code from the standard probability \code{\link[stats:Distributions]{distributions}} in the \code{\link[stats:stats-package]{stats}} package. 2) A vector of characters including the grid specifications for the confounding functions. It should be used when users want to formulate the  confounding  functions as scalar values. 3) A matrix indicating the point mass prior for the confounding functions}
+\item{prior_c_function}{1) A vector of characters indicating the
+prior distributions for the confounding functions.
+Each character contains the random number generation code
+from the standard probability
+\code{\link[stats:Distributions]{distributions}}
+in the \code{\link[stats:stats-package]{stats}} package.
+2) A vector of characters including the grid specifications for
+the confounding functions. It should be used when users want to formulate
+the  confounding  functions as scalar values.
+3) A matrix indicating the point mass prior for the confounding functions}
 
-\item{M1}{A numeric value indicating the number of draws of the GPS from the posterior predictive distribution}
+\item{m1}{A numeric value indicating the number of draws of the GPS
+from the posterior predictive distribution}
 
-\item{M2}{A numeric value indicating the number of draws from the prior distributions of the confounding functions}
+\item{m2}{A numeric value indicating the number of draws from
+the prior distributions of the confounding functions}
 
-\item{nCores}{A numeric value indicating number of cores to use for parallel computing.}
+\item{n_cores}{A numeric value indicating number of cores to use
+for parallel computing.}
 
-\item{estimand}{A character string representing the type of causal estimand. Only \code{"ATT"} or \code{"ATE"} is allowed. When the \code{estimand = "ATT"}, users also need to specify the reference treatment group by setting the \code{reference_trt} argument.}
+\item{estimand}{A character string representing the type of
+causal estimand. Only \code{"ATT"} or \code{"ATE"} is allowed.
+ When the \code{estimand = "ATT"}, users also need to specify the
+ reference treatment group by setting the \code{reference_trt} argument.}
 
-\item{reference_trt}{A numeric value indicating reference treatment group for ATT effect.}
+\item{reference_trt}{A numeric value indicating reference treatment group
+for ATT effect.}
 
 \item{...}{Other parameters that can be passed to BART functions}
 }
 \value{
-A list of causal estimands including risk difference (RD) between different treatment groups.
+A list of causal estimands including risk difference (RD)
+between different treatment groups.
 }
 \description{
-The function \code{sa} implements the flexible sensitivity analysis approach for unmeasured confounding with multiple treatments and a binary outcome.
+The function \code{sa} implements the flexible sensitivity analysis
+approach for unmeasured confounding with multiple treatments
+and a binary outcome.
 }
 \examples{
 \donttest{
 lp_w_all <-
- c(".4*x1 + .1*x2  - 1.1*x4 + 1.1*x5",    # w = 1
-   ".2 * x1 + .2 * x2  - 1.2 * x4 - 1.3 * x5")  # w = 2
+  c(
+    ".4*x1 + .1*x2  - 1.1*x4 + 1.1*x5", # w = 1
+    ".2 * x1 + .2 * x2  - 1.2 * x4 - 1.3 * x5"
+  ) # w = 2
 nlp_w_all <-
- c("-.5*x1*x4  - .1*x2*x5", # w = 1
-   "-.3*x1*x4 + .2*x2*x5")# w = 2
+  c(
+    "-.5*x1*x4  - .1*x2*x5", # w = 1
+    "-.3*x1*x4 + .2*x2*x5"
+  ) # w = 2
 lp_y_all <- rep(".2*x1 + .3*x2 - .1*x3 - 1.1*x4 - 1.2*x5", 3)
 nlp_y_all <- rep(".7*x1*x1  - .1*x2*x3", 3)
 X_all <- c(
- "rnorm(100, 0, 0.5)",# x1
- "rbeta(100, 2, .4)",   # x2
- "runif(100, 0, 0.5)",# x3
- "rweibull(100,1,2)",  # x4
- "rbinom(100, 1, .4)"# x5
+  "rnorm(0, 0.5)", # x1
+  "rbeta(2, .4)", # x2
+  "runif(0, 0.5)", # x3
+  "rweibull(1,2)", # x4
+  "rbinom(1, .4)" # x5
 )
 set.seed(1111)
 data <- data_sim(
- sample_size = 100,
- n_trt = 3,
- X = X_all,
- lp_y = lp_y_all,
- nlp_y  = nlp_y_all,
- align = FALSE,
- lp_w = lp_w_all,
- nlp_w = nlp_w_all,
- tau = c(0.5,-0.5,0.5),
- delta = c(0.5,0.5),
- psi = 2
+  sample_size = 100,
+  n_trt = 3,
+  x = X_all,
+  lp_y = lp_y_all,
+  nlp_y = nlp_y_all,
+  align = FALSE,
+  lp_w = lp_w_all,
+  nlp_w = nlp_w_all,
+  tau = c(0.5, -0.5, 0.5),
+  delta = c(0.5, 0.5),
+  psi = 2
 )
 c_grid <- c(
- "runif(-0.6, 0)",# c(1,2)
- "runif(0, 0.6)",# c(2,1)
- "runif(-0.6, 0)", # c(2,3)
- "seq(-0.6, 0, by = 0.3)", # c(1,3)
- "seq(0, 0.6, by = 0.3)", # c(3,1)
- "runif(0, 0.6)" # c(3,2)
+  "runif(-0.6, 0)", # c(1,2)
+  "runif(0, 0.6)", # c(2,1)
+  "runif(-0.6, 0)", # c(2,3)
+  "seq(-0.6, 0, by = 0.3)", # c(1,3)
+  "seq(0, 0.6, by = 0.3)", # c(3,1)
+  "runif(0, 0.6)" # c(3,2)
 )
 sensitivity_analysis_parallel_result <-
- sa(
-   M1 = 1,
-   x = data$covariates,
-   y = data$y,
-   w = data$w,
-   prior_c_function = c_grid,
-   nCores = 1,
-   estimand = "ATE",
- )
- }
+  sa(
+    m1 = 1,
+    x = data$covariates,
+    y = data$y,
+    w = data$w,
+    prior_c_function = c_grid,
+    n_cores = 1,
+    estimand = "ATE",
+  )
+}
 }
 \references{
-Hu, L., Ji, J. (2021). CIMTx: An R package for causal inference with multiple treatments using observational data. arXiv:2110.10276
+Hadley Wickham (2019).
+\emph{stringr: Simple, Consistent Wrappers for Common String Operations}.
+R package version 1.4.0.
+URL:\url{https://CRAN.R-project.org/package=stringr}
+
+Hadley Wickham (2021).
+\emph{tidyr: Tidy Messy Data}.
+R package version 1.1.4.
+URL:\url{https://CRAN.R-project.org/package=tidyr}
+
+Sparapani R, Spanbauer C, McCulloch R
+Nonparametric Machine Learning and
+Efficient Computation with Bayesian Additive Regression Trees:
+The BART R Package. \emph{Journal of Statistical Software},
+\strong{97}(1), 1-66.
+
+Microsoft Corporation and Steve Weston (2020).
+\emph{doParallel: Foreach Parallel Adaptor for the 'parallel' Package}.
+R package version 1.0.16.
+ URL:\url{https://CRAN.R-project.org/package=doParallel}
+
+Microsoft and Steve Weston (2020).
+\emph{foreach: Provides Foreach Looping Construct.}.
+R package version 1.5.1
+URL:\url{https://CRAN.R-project.org/package=foreach}
 }
